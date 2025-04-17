@@ -1,0 +1,174 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Learning Loop - Club Med Style (Verified)</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    margin: 0;
+    padding-top: 30px;
+    font-family: 'Poppins', sans-serif;
+    background-color: #F5F5F5;
+    color: #003366;
+  }
+  h1 {
+    margin-bottom: 10px;
+    font-size: 2.5em;
+    color: #0076BE;
+  }
+  #message {
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    color: #0076BE;
+    height: 30px;
+  }
+  #wheel-container {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #wheel {
+    border: 5px solid #0076BE;
+    border-radius: 50%;
+    background: white;
+  }
+  #arrow {
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 30px solid #0076BE;
+    position: absolute;
+    top: 0;
+    z-index: 2;
+  }
+  button {
+    margin-top: 30px;
+    padding: 12px 25px;
+    font-size: 18px;
+    cursor: pointer;
+    background-color: #0076BE;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    transition: background-color 0.3s;
+  }
+  button:hover {
+    background-color: #005B9A;
+  }
+</style>
+</head>
+<body>
+
+<h1>The Learning Loop</h1>
+<div id="message"></div>
+<div id="wheel-container">
+  
+  <canvas id="wheel" width="350" height="350"></canvas>
+</div>
+<button onclick="spinWheel()">Lancer la roue</button>
+
+<audio id="tick-sound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" preload="auto"></audio>
+
+<script>
+const options = [
+  { label: "Speexx", url: "https://boostlearning.my.canva.site/speexx" },
+  { label: "360", url: "https://boostlearning.my.canva.site/360" },
+  { label: "Leadership", url: "https://boostlearning.my.canva.site/leadership-compass" },
+  { label: "Brain Up", url: "https://boostlearning.my.canva.site/rituels-manag-riaux" }
+];
+
+const colors = ["#8ecae6", "#219ebc", "#ffb703", "#023047"];
+const wheel = document.getElementById('wheel');
+const ctx = wheel.getContext('2d');
+const tickSound = document.getElementById('tick-sound');
+const message = document.getElementById('message');
+const segmentAngle = 2 * Math.PI / options.length;
+
+function drawWheel(rotation = 0) {
+  ctx.clearRect(0, 0, wheel.width, wheel.height);
+  ctx.save();
+  ctx.translate(wheel.width/2, wheel.height/2);
+  ctx.rotate(rotation);
+
+  options.forEach((option, index) => {
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.fillStyle = colors[index % colors.length];
+    ctx.arc(0, 0, 170, index * segmentAngle, (index+1) * segmentAngle);
+    ctx.fill();
+
+    ctx.save();
+    ctx.rotate((index + 0.5) * segmentAngle);
+    ctx.translate(100, 0);
+    ctx.rotate(Math.PI/2);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 14px Poppins, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(option.label, 0, 0);
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+drawWheel();
+
+let spinning = false;
+let currentRotation = 0;
+
+function spinWheel() {
+  if (spinning) return;
+  spinning = true;
+  message.textContent = "";
+
+  const randomTurns = Math.floor(Math.random() * 3) + 5;
+  const extraAngle = Math.random() * 2 * Math.PI;
+  const totalRotation = (randomTurns * 2 * Math.PI) + extraAngle;
+  const duration = 5000;
+  const frameRate = 1000/60;
+  const totalFrames = duration / frameRate;
+  const increment = totalRotation / totalFrames;
+
+  let frame = 0;
+  const interval = setInterval(() => {
+    currentRotation += increment;
+    drawWheel(currentRotation);
+    frame++;
+
+    if (frame % 10 === 0) {
+      tickSound.currentTime = 0;
+      tickSound.play();
+    }
+
+    if (frame >= totalFrames) {
+      clearInterval(interval);
+      const normalizedRotation = currentRotation % (2 * Math.PI);
+
+      // ✅ Angle corrigé depuis 12h, dans le bon sens
+      const angleFromTop = (2 * Math.PI - (normalizedRotation - Math.PI / 2)) % (2 * Math.PI);
+      const selectedIndex = Math.floor(angleFromTop / segmentAngle);
+      const index = (selectedIndex + options.length) % options.length;
+
+      message.textContent = "Bravo ! Vous avez tiré : " + options[index].label;
+
+      setTimeout(() => {
+        window.location.href = options[index].url;
+      }, 2500);
+    }
+  }, frameRate);
+}
+</script>
+
+</body>
+</html>
